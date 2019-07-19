@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as ml5 from 'ml5';
 import { Upload, Button, Icon } from 'antd';
-import { useDropzone } from 'react-dropzone';
+
+import model from './myKNN.json';
 
 import paper1 from './images/paper/1yKjzquSvl9ShK7K.png';
 import paper2 from './images/paper/0a3UtNzl5Ll3sq8K.png';
@@ -41,9 +42,25 @@ const DropZone = ({ inputImage }) => {
   );
 };
 
+const ModelInput = ({ setUrl }) => {
+  const setImage = event => {
+    console.log(event.target.files);
+    setUrl(URL.createObjectURL(event.target.files[0]));
+  };
+  return (
+    <div>
+      <div>
+        <input type="file" onChange={setImage} name="as" />
+        <label>aassa</label>
+      </div>
+    </div>
+  );
+};
+
 export default () => {
   const [knnClassifier, setKnnClassifier] = useState(null);
   const [featureExtractor, setFeatureExtractor] = useState(null);
+  const [modelUrl, setModelUrl] = useState(null);
   const inputRef = useRef();
   const paper1Ref = useRef(null);
   const paper2Ref = useRef(null);
@@ -108,6 +125,34 @@ export default () => {
     const featureInput = featureExtractor.infer(inputRef.current);
     results = await knnClassifier.classify(featureInput);
     console.log('input ', results);
+
+    console.log(knnClassifier.getCountByLabel());
+  };
+
+  const saveModel = () => knnClassifier.save();
+
+  const loadModel = async () => {
+    await knnClassifier.load(model);
+    console.log('model loaded');
+  };
+
+  const loadModelFromInput = async () => {
+    console.log(modelUrl);
+
+    await knnClassifier.load(modelUrl);
+    console.log('input model loaded');
+  };
+
+  const setModel = async file => {
+    console.log(file);
+    await knnClassifier.load(URL.createObjectURL(file));
+    console.log('input model loaded');
+    return false; // Preven donit post
+  };
+
+  const stopUpload = file => {
+    console.log(file);
+    return false;
   };
 
   useEffect(() => {
@@ -175,9 +220,23 @@ export default () => {
       />
       <button onClick={predict}>Predict</button>
       <button onClick={classify}>Train</button>
-      {/* <button onClick={saveModel}>Save</button> */}
-      {/* <button onClick={loadModel}>Load</button> */}
+      <button onClick={saveModel}>Save</button>
+      <button onClick={loadModel}>Load</button>
+      <button onClick={loadModelFromInput}>inputModel</button>
       <DropZone inputImage={inputRef} />
+      <ModelInput setUrl={setModelUrl} />
+      <Upload
+        name="file"
+        beforeUpload={setModel}
+        accept=".json, .png"
+        onChange={stopUpload}
+        action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+        headers={{ authorization: 'authorization-text' }}
+      >
+        <Button>
+          <Icon type="upload" /> Click to Upload
+        </Button>
+      </Upload>
     </div>
   );
 };
