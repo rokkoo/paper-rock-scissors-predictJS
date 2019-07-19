@@ -65,7 +65,7 @@ const predict = () => {
 };
 
 const saveModel = () => {
-  classifier.save();
+  classifier.save(); // Default name model.json
 };
 
 const loadModel = async () => {
