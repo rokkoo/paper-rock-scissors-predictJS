@@ -1,7 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import * as ml5 from 'ml5';
+import { Upload, Button, Icon } from 'antd';
+import { useDropzone } from 'react-dropzone';
 
 import paper1 from './images/paper/1yKjzquSvl9ShK7K.png';
+import paper2 from './images/paper/0a3UtNzl5Ll3sq8K.png';
+import paper3 from './images/paper/0vugygEjxQJPr9yz.png';
 
 import rock1 from './images/rock/0bioBZYFCXqJIulm.png';
 import rock2 from './images/rock/0NDYNEoDui7o64gU.png';
@@ -12,10 +16,38 @@ import scissors1 from './images/scissors/0CSaM2vL2cWX6Cay.png';
 import scissors2 from './images/scissors/0ePX1wuCc3et7leL.png';
 import scissors3 from './images/scissors/1CXgK9fgGdSRggD9.png';
 
+const DropZone = ({ inputImage }) => {
+  const [name, setName] = useState(null);
+
+  const setImage = event => {
+    console.log(event.target.files);
+
+    setName(URL.createObjectURL(event.target.files[0]));
+  };
+  return (
+    <div>
+      <div>
+        <input type="file" onChange={setImage} />
+        <img
+          src={name}
+          alt=""
+          width="224"
+          height="224"
+          hidden
+          ref={inputImage}
+        />
+      </div>
+    </div>
+  );
+};
+
 export default () => {
   const [knnClassifier, setKnnClassifier] = useState(null);
   const [featureExtractor, setFeatureExtractor] = useState(null);
+  const inputRef = useRef();
   const paper1Ref = useRef(null);
+  const paper2Ref = useRef(null);
+  const paper3Ref = useRef(null);
   const rock1Ref = useRef(null);
   const rock2Ref = useRef(null);
   const rock3Ref = useRef(null);
@@ -24,12 +56,18 @@ export default () => {
   const scissors2Ref = useRef(null);
   const scissors3Ref = useRef(null);
 
-  let img = new Image(224, 224);
-
   const classify = async () => {
     // TRAIN IMGS
     // Add examples with a label to classifier
+    // Paper
     let features = await featureExtractor.infer(paper1Ref.current);
+    knnClassifier.addExample(features, 'paper');
+
+    features = await featureExtractor.infer(paper2Ref.current);
+    knnClassifier.addExample(features, 'paper');
+
+    // Rock
+    features = await featureExtractor.infer(paper3Ref.current);
     knnClassifier.addExample(features, 'paper');
 
     features = await featureExtractor.infer(rock1Ref.current);
@@ -41,6 +79,7 @@ export default () => {
     features = await featureExtractor.infer(rock3Ref.current);
     knnClassifier.addExample(features, 'rock');
 
+    // Scissors
     features = await featureExtractor.infer(scissors1Ref.current);
     knnClassifier.addExample(features, 'scissors');
 
@@ -65,6 +104,10 @@ export default () => {
     const featuresPaper = featureExtractor.infer(paper1Ref.current);
     results = await knnClassifier.classify(featuresPaper);
     console.log(results);
+
+    const featureInput = featureExtractor.infer(inputRef.current);
+    results = await knnClassifier.classify(featureInput);
+    console.log('input ', results);
   };
 
   useEffect(() => {
@@ -84,6 +127,22 @@ export default () => {
         height="224"
         alt=""
         ref={paper1Ref}
+        hidden
+      />
+      <img
+        src={paper2}
+        width="224"
+        height="224"
+        alt=""
+        ref={paper2Ref}
+        hidden
+      />
+      <img
+        src={paper3}
+        width="224"
+        height="224"
+        alt=""
+        ref={paper3Ref}
         hidden
       />
       <img src={rock1} width="224" height="224" alt="" ref={rock1Ref} hidden />
@@ -118,6 +177,7 @@ export default () => {
       <button onClick={classify}>Train</button>
       {/* <button onClick={saveModel}>Save</button> */}
       {/* <button onClick={loadModel}>Load</button> */}
+      <DropZone inputImage={inputRef} />
     </div>
   );
 };
